@@ -38,7 +38,7 @@ class ApiKeyResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('name')->searchable(),
+                Tables\Columns\TextColumn::make('name')->searchable(),
             ])
             ->filters([
                 //
