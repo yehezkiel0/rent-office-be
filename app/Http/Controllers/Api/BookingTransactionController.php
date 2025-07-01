@@ -4,13 +4,31 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBookingTransactionRequest;
+use App\Http\Requests\ViewBookingRequest;
 use App\Http\Resources\Api\BookingTransactionResource;
+use App\Http\Resources\Api\ViewBookingResource;
 use App\Models\BookingTransaction;
 use App\Models\OfficeSpace;
 use Illuminate\Http\Request;
 
 class BookingTransactionController extends Controller
 {
+
+    public function booking_details(ViewBookingRequest $request)
+    {
+        $validatedData = $request->validated();
+
+        $booking = BookingTransaction::where('phone_number', $validatedData['phone_number'])
+            ->where('booking_trx_id', $validatedData['booking_trx_id'])
+            ->with(['officeSpace', 'officeSpace.city'])
+            ->first();
+
+        if (!$booking) {
+            return response()->json(['message' => 'Booking not found'], 404);
+        }
+        return new ViewBookingResource($booking);
+    }
+
     public function store(StoreBookingTransactionRequest $request)
     {
         $validatedData = $request->validated();
