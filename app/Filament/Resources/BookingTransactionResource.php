@@ -7,6 +7,7 @@ use App\Filament\Resources\BookingTransactionResource\RelationManagers;
 use App\Models\BookingTransaction;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -88,6 +89,36 @@ class BookingTransactionResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+
+                Tables\Actions\Action::make('approve')
+                    ->label('Approve')
+                    ->action(function (BookingTransaction $record) {
+                        $record->update(['is_paid' => true]);
+
+
+                        Notification::make()
+                            ->title('Booking Approved')
+                            ->success()
+                            ->body("Booking transaction {$record->booking_trx_id} has been approved.")
+                            ->send();
+
+                        $sid = getenv('TWILIO_ACCOUNT_SID');
+                        $token = getenv('TWILIO_AUTH_TOKEN');
+                        $twilio = new \Twilio\Rest\Client($sid, $token);
+
+                        $messageBody = "Hi {$record->name}, your booking for {$record->officeSpace->name} has been successfully created. Your booking ID is {$record->booking_trx_id}. Please keep this ID for future reference.";
+
+                        $twilio->messages->create(
+                            "+6281281897971",
+                            [
+                                'from' => getenv('TWILIO_PHONE_NUMBER'),
+                                'body' => $messageBody
+                            ]
+                        );
+                    })
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn(BookingTransaction $record) => !$record->is_paid),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

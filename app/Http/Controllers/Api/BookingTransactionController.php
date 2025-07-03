@@ -42,6 +42,19 @@ class BookingTransactionController extends Controller
 
         $bookingTransaction = BookingTransaction::create($validatedData);
 
+        $sid = getenv('TWILIO_ACCOUNT_SID');
+        $token = getenv('TWILIO_AUTH_TOKEN');
+        $twilio = new \Twilio\Rest\Client($sid, $token);
+
+        $messageBody = "Hi {$bookingTransaction->name}, your booking for {$bookingTransaction->officeSpace->name} has been successfully created. Your booking ID is {$bookingTransaction->booking_trx_id}. Please keep this ID for future reference.";
+
+        $twilio->messages->create(
+            "+{$bookingTransaction->phone_number}",
+            [
+                'from' => getenv('TWILIO_PHONE_NUMBER'),
+                'body' => $messageBody
+            ]
+        );
         $bookingTransaction->load('officeSpace');
 
         return new BookingTransactionResource($bookingTransaction);
